@@ -82,7 +82,7 @@ static int checkStringLength(client *c, long long size, long long append) {
 static int getExpireMillisecondsOrReply(client *c, robj *expire, int flags, int unit, long long *milliseconds);
 
 void setGenericCommand(client *c, int flags, robj *key, robj *val, robj *expire, int unit, robj *ok_reply, robj *abort_reply) {
-    long long milliseconds = 0; /* initialized to avoid any harmness warning */
+    long long milliseconds = 0; /* initialized to avoivd any harmness warning */
     int found = 0;
     int setkey_flags = 0;
 
