@@ -1,5 +1,5 @@
-#define REDIS_GIT_SHA1 "00000000"
-#define REDIS_GIT_DIRTY "       0"
-#define REDIS_BUILD_ID "seojiung-ui-MacBookPro.local-1700032465"
+#define REDIS_GIT_SHA1 "923a0523"
+#define REDIS_GIT_DIRTY "       3"
+#define REDIS_BUILD_ID "seojiung-ui-MacBookPro.local-1700036310"
 #include "version.h"
 #define REDIS_BUILD_ID_RAW REDIS_VERSION REDIS_BUILD_ID REDIS_GIT_DIRTY REDIS_GIT_SHA1
