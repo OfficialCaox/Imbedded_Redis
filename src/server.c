@@ -1963,6 +1963,10 @@ void createSharedObjects(void) {
     shared.special_equals = createStringObject("=",1);
     shared.redacted = makeObjectShared(createStringObject("(redacted)",10));
 
+    shared.bsset = createStringObject("BSSET",5);
+    shared.bsget = createStringObject("BSGET",5);
+    
+    
     for (j = 0; j < OBJ_SHARED_INTEGERS; j++) {
         shared.integers[j] =
             makeObjectShared(createObject(OBJ_STRING,(void*)(long)j));

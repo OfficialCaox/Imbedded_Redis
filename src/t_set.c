@@ -29,14 +29,37 @@
 
 #include "server.h"
 #include "intset.h"  /* Compact integer set structure */
-
+#include "stdlib.h"
 /*-----------------------------------------------------------------------------
  * Set Commands
  *----------------------------------------------------------------------------*/
 
 void sunionDiffGenericCommand(client *c, robj **setkeys, int setnum,
                               robj *dstkey, int op);
+// 트리 노드를 나타내는 구조체 정의
+typedef struct TreeNode {
+    int data;
+    struct TreeNode* left;
+    struct TreeNode* right;
+} TreeNode;
 
+// 새로운 노드를 생성하여 반환
+TreeNode* createNode(int data);
+
+// 트리에 데이터를 삽입하는 함수
+void setTree(int data);
+
+// 트리에 데이터를 삽입하는 재귀 함수
+TreeNode* setTreeRecursive(TreeNode* root, int data);
+
+// 트리에서 데이터를 찾아오는 함수
+TreeNode* getTree(int data);
+
+// 트리에서 데이터를 찾아오는 재귀 함수
+TreeNode* getTreeRecursive(TreeNode* root, int data);
+
+// 메모리 해제 함수
+void freeTree(TreeNode* root);
 /* Factory method to return a set that *can* hold "value". When the object has
  * an integer-encodable value, an intset will be returned. Otherwise a listpack
  * or a regular hash table.
@@ -601,6 +624,115 @@ robj *setTypeDup(robj *o) {
     }
     return set;
 }
+
+
+// 전역 변수로 선언된 트리의 루트 노드
+static TreeNode* bstRoot = NULL;
+
+// 새로운 노드를 생성하여 반환
+TreeNode* createNode(int data) {
+    TreeNode* newNode = (TreeNode*)zmalloc(sizeof(TreeNode));
+    if (newNode == NULL) {
+        perror("Memory allocation failed");
+        exit(EXIT_FAILURE);
+    }
+
+    newNode->data = data;
+    newNode->left = newNode->right = NULL;
+    return newNode;
+}
+
+// 트리에 데이터를 삽입하는 함수
+void setTree(int data) {
+    bstRoot = setTreeRecursive(bstRoot, data);
+}
+
+// 트리에 데이터를 삽입하는 재귀 함수
+TreeNode* setTreeRecursive(TreeNode* root, int data) {
+    // 트리가 비어있으면 새로운 노드를 생성하여 반환
+    if (root == NULL) {
+        return createNode(data);
+    }
+
+    // 데이터가 현재 노드의 데이터보다 작으면 왼쪽 서브트리로 이동
+    if (data < root->data) {
+        root->left = setTreeRecursive(root->left, data);
+    }
+    // 데이터가 현재 노드의 데이터보다 크면 오른쪽 서브트리로 이동
+    else if (data > root->data) {
+        root->right = setTreeRecursive(root->right, data);
+    }
+
+    // 데이터가 중복되는 경우 (무시하거나 에러 처리 방식을 선택할 수 있음)
+
+    return root;
+}
+
+// 트리에서 데이터를 찾아오는 함수
+TreeNode* getTree(int data) {
+    return getTreeRecursive(bstRoot, data);
+}
+
+// 트리에서 데이터를 찾아오는 재귀 함수
+TreeNode* getTreeRecursive(TreeNode* root, int data) {
+    // 루트가 NULL이거나 데이터를 찾았을 때
+    if (root == NULL || root->data == data) {
+        return root;
+    }
+
+    // 데이터가 현재 노드의 데이터보다 작으면 왼쪽 서브트리에서 검색
+    if (data < root->data) {
+        return getTreeRecursive(root->left, data);
+    }
+    // 데이터가 현재 노드의 데이터보다 크면 오른쪽 서브트리에서 검색
+    else {
+        return getTreeRecursive(root->right, data);
+    }
+}
+
+// 메모리 해제 함수
+void freeTree(TreeNode* root) {
+    if (root != NULL) {
+        freeTree(root->left);
+        freeTree(root->right);
+        zfree(root);
+    }
+}
+//---------------------------------------------------
+// BSSET 명령어 처리 함수
+void bssetCommand(client *c) {
+    int int_key = atoi(c->argv[1]->ptr);
+    setTree(int_key);
+    addReply(c, shared.ok);
+}
+
+// BSGET 명령어 처리 함수
+void bsgetCommand(client* c) {
+    // BSGET 명령어는 하나의 파라미터, 키만을 가지고 있어야 한다.
+    if (c->argc != 2) {
+        addReplyError(c, "BSGET requires exactly one argument");
+        return;
+    }
+
+    // c->argv[1]이 키 값이다. 이를 정수형으로 변환한다.
+    int int_key = atoi(c->argv[1]->ptr);
+
+    // getTree 함수를 사용하여 이진 검색 트리에서 값을 찾아온다.
+    TreeNode* resultNode = getTree(int_key);
+
+    // 값이 존재하는 경우, catch의 문자열과 함께 응답한다.
+    if (resultNode != NULL) {
+        // resultNode->value를 사용하여 값을 얻어온다.
+        addReplyBulkCString(c, "catch");
+    } else {
+        // 값이 없는 경우, fault 응답한다.
+        addReplyError(c, "fault");
+    }
+}
+
+
+
+//--------------------------------------------------------------------
 
 void saddCommand(client *c) {
     robj *set;

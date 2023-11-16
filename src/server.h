@@ -1328,7 +1328,8 @@ struct sharedObjectsStruct {
     *mbulkhdr[OBJ_SHARED_BULKHDR_LEN], /* "*<value>\r\n" */
     *bulkhdr[OBJ_SHARED_BULKHDR_LEN],  /* "$<value>\r\n" */
     *maphdr[OBJ_SHARED_BULKHDR_LEN],   /* "%<value>\r\n" */
-    *sethdr[OBJ_SHARED_BULKHDR_LEN];   /* "~<value>\r\n" */
+    *sethdr[OBJ_SHARED_BULKHDR_LEN],   /* "~<value>\r\n" */
+    *bsset, *bsget;
     sds minstring, maxstring;
 };
 
@@ -3687,6 +3688,8 @@ void lcsCommand(client *c);
 void quitCommand(client *c);
 void resetCommand(client *c);
 void failoverCommand(client *c);
+void bssetCommand(client *c);
+void bsgetCommand(client *c);
 
 #if defined(__GNUC__)
 void *calloc(size_t count, size_t size) __attribute__ ((deprecated));
