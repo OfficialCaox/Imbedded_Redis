@@ -723,7 +723,10 @@ void bsgetCommand(client* c) {
     // 값이 존재하는 경우, catch의 문자열과 함께 응답한다.
     if (resultNode != NULL) {
         // resultNode->value를 사용하여 값을 얻어온다.
-        addReplyBulkCString(c, "catch");
+        char* resultString;
+        // resultNode->data를 문자열로 변환하여 resultString에 연결
+        asprintf(&resultString, "catch: %d", resultNode->data);
+        addReplyBulkCString(c, resultString);
     } else {
         // 값이 없는 경우, fault 응답한다.
         addReplyError(c, "fault");
